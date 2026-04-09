@@ -19,7 +19,7 @@ from src.backend.agent.tools.tools import (
     book_appointment,
 )
 
-load_dotenv(".env")
+load_dotenv(Path(__file__).resolve().parents[3] / ".env")
 
 SYSTEM_PROMPT_PATH = Path(__file__).resolve().parent / "system_prompt.txt"
 SYSTEM_PROMPT = SYSTEM_PROMPT_PATH.read_text(encoding="utf-8")
@@ -159,9 +159,24 @@ def build_graph():
 GRAPH = build_graph()
 
 
-def run_turn(user_input: str, history: list | None = None):
+def run_turn(user_input: str, history: list | None = None, image_b64: str | None = None):
     current_history = history or []
-    input_messages = current_history + [HumanMessage(content=user_input)]
+
+    if image_b64:
+        # image_b64 may be a full data URI (data:image/png;base64,...) or raw base64
+        if image_b64.startswith("data:"):
+            image_url = image_b64
+        else:
+            image_url = f"data:image/jpeg;base64,{image_b64}"
+        content: list = [
+            {"type": "text", "text": user_input or "Đây là ảnh triệu chứng của tôi."},
+            {"type": "image_url", "image_url": {"url": image_url}},
+        ]
+        human_msg = HumanMessage(content=content)
+    else:
+        human_msg = HumanMessage(content=user_input)
+
+    input_messages = current_history + [human_msg]
     result = GRAPH.invoke({"messages": input_messages})
     messages = result["messages"]
     all_messages = messages if isinstance(messages, list) else [messages]
