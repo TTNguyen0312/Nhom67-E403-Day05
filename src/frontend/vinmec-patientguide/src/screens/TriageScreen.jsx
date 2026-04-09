@@ -3,6 +3,20 @@ import { Shell, Bubble, TypingDots } from '../components';
 import { colors } from '../styles/tokens';
 import { EMERGENCY_KEYWORDS, AI_QUESTIONS } from '../data/constants';
 import { sendMessageToAgent } from "../services/agentApi";
+
+function renderText(text) {
+  if (!text) return null;
+  const parts = text.split(/(\*\*[^*]+\*\*)/g);
+  return (
+    <span style={{ whiteSpace: 'pre-line' }}>
+      {parts.map((part, i) =>
+        part.startsWith('**') && part.endsWith('**')
+          ? <strong key={i}>{part.slice(2, -2)}</strong>
+          : part
+      )}
+    </span>
+  );
+}
 export default function TriageScreen({ onEmergency, onSuggest, onEscalate, goHome }) {
   const [msgs, setMsgs] = useState([
     {
@@ -95,7 +109,7 @@ export default function TriageScreen({ onEmergency, onSuggest, onEscalate, goHom
   try {
     const data = await sendMessageToAgent({
       message: txt,
-      session_id: `session-${sessionId}`,
+      session_id: sessionId,
     });
 
     if (data.session_id) {
@@ -162,7 +176,7 @@ export default function TriageScreen({ onEmergency, onSuggest, onEscalate, goHom
       >
         {msgs.map((m) => (
           <Bubble key={m.id} isAI={m.ai}>
-            <span style={{ whiteSpace: 'pre-line' }}>{m.text}</span>
+            {renderText(m.text)}
           </Bubble>
         ))}
         {typing && (
