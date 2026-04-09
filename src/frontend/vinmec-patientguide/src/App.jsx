@@ -1,121 +1,102 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from './assets/vite.svg'
-import heroImg from './assets/hero.png'
-import './App.css'
+import { useState } from 'react';
+import {
+  HomeScreen,
+  TriageScreen,
+  EmergencyScreen,
+  SpecialtyScreen,
+  DoctorScreen,
+  SlotScreen,
+  SuccessScreen,
+  EscalateScreen,
+} from './screens';
 
-function App() {
-  const [count, setCount] = useState(0)
+/**
+ * App-level screen router.
+ *
+ * Manages navigation state and the data that flows between screens:
+ *   home → triage → [emergency | specialty → doctors → slots → success | escalate]
+ */
+export default function App() {
+  const [screen, setScreen] = useState('home');
+  const [specialty, setSpecialty] = useState(null);
+  const [doctor, setDoctor] = useState(null);
+  const [slot, setSlot] = useState(null);
 
-  return (
-    <>
-      <section id="center">
-        <div className="hero">
-          <img src={heroImg} className="base" width="170" height="179" alt="" />
-          <img src={reactLogo} className="framework" alt="React logo" />
-          <img src={viteLogo} className="vite" alt="Vite logo" />
-        </div>
-        <div>
-          <h1>Get started</h1>
-          <p>
-            Edit <code>src/App.jsx</code> and save to test <code>HMR</code>
-          </p>
-        </div>
-        <button
-          className="counter"
-          onClick={() => setCount((count) => count + 1)}
-        >
-          Count is {count}
-        </button>
-      </section>
+  const goHome = () => {
+    setScreen('home');
+    setSpecialty(null);
+    setDoctor(null);
+    setSlot(null);
+  };
 
-      <div className="ticks"></div>
+  switch (screen) {
+    case 'home':
+      return <HomeScreen onStart={() => setScreen('triage')} />;
 
-      <section id="next-steps">
-        <div id="docs">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#documentation-icon"></use>
-          </svg>
-          <h2>Documentation</h2>
-          <p>Your questions, answered</p>
-          <ul>
-            <li>
-              <a href="https://vite.dev/" target="_blank">
-                <img className="logo" src={viteLogo} alt="" />
-                Explore Vite
-              </a>
-            </li>
-            <li>
-              <a href="https://react.dev/" target="_blank">
-                <img className="button-icon" src={reactLogo} alt="" />
-                Learn more
-              </a>
-            </li>
-          </ul>
-        </div>
-        <div id="social">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#social-icon"></use>
-          </svg>
-          <h2>Connect with us</h2>
-          <p>Join the Vite community</p>
-          <ul>
-            <li>
-              <a href="https://github.com/vitejs/vite" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#github-icon"></use>
-                </svg>
-                GitHub
-              </a>
-            </li>
-            <li>
-              <a href="https://chat.vite.dev/" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#discord-icon"></use>
-                </svg>
-                Discord
-              </a>
-            </li>
-            <li>
-              <a href="https://x.com/vite_js" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#x-icon"></use>
-                </svg>
-                X.com
-              </a>
-            </li>
-            <li>
-              <a href="https://bsky.app/profile/vite.dev" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#bluesky-icon"></use>
-                </svg>
-                Bluesky
-              </a>
-            </li>
-          </ul>
-        </div>
-      </section>
+    case 'triage':
+      return (
+        <TriageScreen
+          goHome={goHome}
+          onEmergency={() => setScreen('emergency')}
+          onSuggest={() => setScreen('specialty')}
+          onEscalate={() => setScreen('escalate')}
+        />
+      );
 
-      <div className="ticks"></div>
-      <section id="spacer"></section>
-    </>
-  )
+    case 'emergency':
+      return <EmergencyScreen goHome={goHome} />;
+
+    case 'specialty':
+      return (
+        <SpecialtyScreen
+          goBack={() => setScreen('triage')}
+          onSelect={(s) => {
+            setSpecialty(s);
+            setScreen('doctors');
+          }}
+          onEscalate={() => setScreen('escalate')}
+        />
+      );
+
+    case 'doctors':
+      return (
+        <DoctorScreen
+          specialty={specialty}
+          goBack={() => setScreen('specialty')}
+          onSelectDoctor={(d) => {
+            setDoctor(d);
+            setScreen('slots');
+          }}
+        />
+      );
+
+    case 'slots':
+      return (
+        <SlotScreen
+          doctor={doctor}
+          specialty={specialty}
+          goBack={() => setScreen('doctors')}
+          onConfirm={(s) => {
+            setSlot(s);
+            setScreen('success');
+          }}
+        />
+      );
+
+    case 'success':
+      return (
+        <SuccessScreen
+          doctor={doctor}
+          specialty={specialty}
+          slot={slot}
+          goHome={goHome}
+        />
+      );
+
+    case 'escalate':
+      return <EscalateScreen goHome={goHome} />;
+
+    default:
+      return <HomeScreen onStart={() => setScreen('triage')} />;
+  }
 }
-
-export default App
