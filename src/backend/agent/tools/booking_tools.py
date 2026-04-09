@@ -4,7 +4,7 @@ import json
 from datetime import datetime, timezone
 
 from langchain_core.tools import tool
-from src.be.helpers.data_loader import DATA_DIR, parse_js_export
+from src.backend.agent.helpers.data_loader import DATA_DIR, parse_js_export
 
 # Load once at import time
 DEPARTMENTS: list[dict] = parse_js_export(DATA_DIR / "departments.js")

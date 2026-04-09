@@ -5,7 +5,7 @@ import re
 import unicodedata
 
 from langchain_core.tools import tool
-from src.be.helpers.data_loader import DATA_DIR, parse_js_export
+from src.backend.agent.helpers.data_loader import DATA_DIR, parse_js_export
 
 # Load departments from the data file once at import time
 _DEPARTMENTS: list[dict] = parse_js_export(DATA_DIR / "departments.js")

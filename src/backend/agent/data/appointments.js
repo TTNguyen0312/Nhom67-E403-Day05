@@ -230,6 +230,23 @@ const appointments = [
     "createdAt": "2026-04-09T05:44:02+07:00",
     "updatedAt": "2026-04-09T05:44:02+07:00"
   },
+  {
+    "id": "apt-011",
+    "patientId": null,
+    "doctorId": "doc-015",
+    "departmentId": "dept-tieu-hoa",
+    "branchId": "branch-hn-1",
+    "date": "2023-10-11",
+    "time": "14:00",
+    "endTime": null,
+    "status": "confirmed",
+    "source": "ai_triage",
+    "symptoms": null,
+    "consultationFee": 300000,
+    "notes": "",
+    "createdAt": "2026-04-09T07:21:51+07:00",
+    "updatedAt": "2026-04-09T07:21:51+07:00"
+  },
 ];
 
 export default appointments;
