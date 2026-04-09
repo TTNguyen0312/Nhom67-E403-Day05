@@ -196,6 +196,23 @@ const appointments = [
     createdAt: '2026-04-07T13:00:00+07:00',
     updatedAt: '2026-04-08T20:00:00+07:00',
   },
+  {
+    "id": "apt-009",
+    "patientId": null,
+    "doctorId": "doc-004",
+    "departmentId": "dept-than-kinh",
+    "branchId": "branch-hn-1",
+    "date": "2026-04-13",
+    "time": "08:00",
+    "endTime": null,
+    "status": "confirmed",
+    "source": "ai_triage",
+    "symptoms": null,
+    "consultationFee": 600000,
+    "notes": "",
+    "createdAt": "2026-04-09T05:04:11+07:00",
+    "updatedAt": "2026-04-09T05:04:11+07:00"
+  },
 ];
 
 export default appointments;
