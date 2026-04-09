@@ -185,7 +185,14 @@ Node 3: Knowledge Retriever (RAG): Truy xuất thông tin chuyên khoa/bác sĩ 
 
 Node 4: Router/Orchestrator: Đếm số vòng hội thoại. Nếu turn_count > 3 hoặc confidence < threshold, chuyển sang Human Handoff.
 
-## 8. Cách xây dựng Bộ dữ liệu Kiểm thử (Internal Benchmark)
+## 8. Metrics nào đánh giá độ tin cậy của hệ thống
+Metric	Mục tiêu (Target)	Ý nghĩa
+Accuracy	>= 85%	AI phân đúng khoa từ triệu chứng.
+Emergency Miss	0%	Tuyệt đối không bỏ sót ca cấp cứu.
+Latency	< 3s	Đảm bảo trải nghiệm thời gian thực.
+Re-triage Rate	Giảm 50%	Giảm thiểu việc bệnh nhân phải chuyển khoa lặp lại.
+
+## 9. Cách xây dựng Bộ dữ liệu Kiểm thử (Internal Benchmark)
 Vì Spec của bạn nhấn mạnh vào Recall 98% cho ca cấp cứu và 85% chính xác phân khoa, bạn cần tạo 3 tập dữ liệu kiểm thử sau:
 
 a. Tập "Red Flag" (Safety Test)
