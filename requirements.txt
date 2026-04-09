@@ -2,3 +2,8 @@ langchain-core
 langchain-openai
 langgraph
 python-dotenv
+<<<<<<< HEAD
+=======
+fastapi 
+uvicorn 
+>>>>>>> main
