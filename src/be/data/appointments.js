@@ -210,8 +210,25 @@ const appointments = [
     "symptoms": null,
     "consultationFee": 600000,
     "notes": "",
-    "createdAt": "2026-04-09T05:04:11+07:00",
-    "updatedAt": "2026-04-09T05:04:11+07:00"
+    "createdAt": "2026-04-09T05:23:11+07:00",
+    "updatedAt": "2026-04-09T05:23:11+07:00"
+  },
+  {
+    "id": "apt-010",
+    "patientId": null,
+    "doctorId": "doc-006",
+    "departmentId": "dept-than-kinh",
+    "branchId": "branch-hn-1",
+    "date": "2023-10-11",
+    "time": "14:30",
+    "endTime": null,
+    "status": "confirmed",
+    "source": "ai_triage",
+    "symptoms": null,
+    "consultationFee": 400000,
+    "notes": "",
+    "createdAt": "2026-04-09T05:44:02+07:00",
+    "updatedAt": "2026-04-09T05:44:02+07:00"
   },
 ];
 

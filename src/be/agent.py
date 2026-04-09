@@ -12,145 +12,146 @@ from langgraph.graph.message import add_messages
 from langgraph.prebuilt import ToolNode, tools_condition
 from typing_extensions import TypedDict
 
-from triage_tools import (
-    check_emergency,
-    detect_emergency_signals,
-    format_emergency_response,
+from src.be.tools.tools import (
     lookup_specialty_info,
-    suggest_specialties,
-    triage_case,
+    look_up_doctors_by_department,
+    look_up_free_schedule,
+    book_appointment,
 )
 
-load_dotenv('.env')
+load_dotenv(".env")
 
-SYSTEM_PROMPT_PATH = Path(__file__).resolve().parent / 'system_prompt.txt'
-SYSTEM_PROMPT = SYSTEM_PROMPT_PATH.read_text(encoding='utf-8')
+SYSTEM_PROMPT_PATH = Path(__file__).resolve().parent / "system_prompt.txt"
+SYSTEM_PROMPT = SYSTEM_PROMPT_PATH.read_text(encoding="utf-8")
 
 
 class AgentState(TypedDict):
     messages: Annotated[list, add_messages]
 
 
-TOOLS = [triage_case, check_emergency, suggest_specialties, lookup_specialty_info]
-LLM = ChatOpenAI(model=os.getenv('OPENAI_MODEL', 'gpt-4o-mini'), temperature=0)
+TOOLS = [
+    lookup_specialty_info,
+    look_up_doctors_by_department,
+    look_up_free_schedule,
+    book_appointment,
+]
+
+LLM = ChatOpenAI(model=os.getenv("OPENAI_MODEL", "gpt-4o-mini"), temperature=0)
 LLM_WITH_TOOLS = LLM.bind_tools(TOOLS)
 
 
 def _preview_text(content, max_length: int = 180) -> str:
-    # Rút gọn nội dung tool/message để log ra terminal cho dễ đọc.
     text = content if isinstance(content, str) else str(content)
-    text = ' '.join(text.split())
+    text = " ".join(text.split())
     if len(text) <= max_length:
         return text
-    return text[: max_length - 3] + '...'
+    return text[: max_length - 3] + "..."
 
 
 def _latest_human_text(messages: list) -> str | None:
-    # Lấy tin nhắn gần nhất của người dùng để phục vụ safety check và fallback.
     for message in reversed(messages):
         if isinstance(message, HumanMessage):
             return message.content if isinstance(message.content, str) else str(message.content)
     return None
 
 
-def _human_turn_count(messages: list) -> int:
-    # Đếm số lượt người dùng đã nói để hỗ trợ logic handoff trong fallback.
-    return sum(1 for message in messages if isinstance(message, HumanMessage))
+def _fallback_response(user_text: str) -> str:
+    """
+    Fallback chỉ dùng 4 tool đã import.
+    Không gọi tool nào ngoài lookup_specialty_info /
+    look_up_doctors_by_department / look_up_free_schedule / book_appointment.
+    """
+    lowered = user_text.lower().strip()
 
-
-def _hard_safety_response(messages: list) -> AIMessage | None:
-    # Chặn sớm các ca red flag trước khi gọi LLM để ưu tiên hướng dẫn đi cấp cứu.
-    latest_human = _latest_human_text(messages)
-    if not latest_human:
-        return None
-
-    signals = detect_emergency_signals(latest_human)
-    if not signals:
-        return None
-
-    return AIMessage(content=format_emergency_response(signals))
-
-
-def _fallback_response(user_text: str, turn_index: int = 1) -> str:
-    # Fallback rule-based khi model/API lỗi để vẫn trả lời được các câu hỏi cơ bản.
-    lowered = user_text.lower()
-
-    if 'cấp cứu' in lowered or 'cap cuu' in lowered:
-        return check_emergency.invoke({'symptoms': user_text})
-
-    if any(phrase in lowered for phrase in ['khoa', 'chuyên khoa', 'chuyen khoa']) and any(
-        token in lowered for token in ['khám gì', 'kham gi', 'là gì', 'la gi', 'vì sao', 'vi sao']
-    ):
-        specialty_hint = user_text
-        for prefix in ['khoa ', 'chuyên khoa ', 'chuyen khoa ']:
-            if prefix in lowered:
-                start = lowered.index(prefix) + len(prefix)
-                specialty_hint = user_text[start:].strip(' ?')
-                break
-        return lookup_specialty_info.invoke({'specialty': specialty_hint})
-
-    if any(
-        phrase in lowered
-        for phrase in ['không đúng', 'khong dung', 'không phải', 'khong phai', 'chưa đúng', 'chua dung']
-    ):
-        return triage_case.invoke(
-            {
-                'symptoms': user_text,
-                'previous_feedback': user_text,
-                'turn_index': turn_index,
-            }
+    if not lowered:
+        return (
+            "Mình đang gặp sự cố kết nối với mô hình. "
+            "Bạn hãy mô tả triệu chứng hoặc hỏi rõ như: "
+            "“nên khám khoa nào?”, “bác sĩ khoa tim mạch”, "
+            "“lịch trống bác sĩ X”, hoặc “đặt lịch khám”."
         )
 
-    if user_text.strip():
-        return triage_case.invoke({'symptoms': user_text, 'turn_index': turn_index})
+    # Trường hợp hỏi khoa/chuyên khoa
+    if any(token in lowered for token in ["khoa", "chuyên khoa", "chuyen khoa"]):
+        specialty_hint = user_text
+        for prefix in ["khoa ", "chuyên khoa ", "chuyen khoa "]:
+            idx = lowered.find(prefix)
+            if idx != -1:
+                specialty_hint = user_text[idx + len(prefix):].strip(" ?")
+                break
 
+        try:
+            return lookup_specialty_info.invoke({"specialty": specialty_hint})
+        except Exception:
+            return (
+                "Mình chưa xử lý được yêu cầu lúc này. "
+                "Bạn có thể nói rõ triệu chứng hoặc tên chuyên khoa bạn muốn khám."
+            )
+
+    # Trường hợp hỏi bác sĩ theo khoa
+    if any(phrase in lowered for phrase in ["bác sĩ", "bac si", "doctor"]):
+        try:
+            return look_up_doctors_by_department.invoke({"query": user_text})
+        except Exception:
+            return (
+                "Mình chưa tra cứu được danh sách bác sĩ lúc này. "
+                "Bạn có thể cho mình tên khoa hoặc chuyên khoa cụ thể."
+            )
+
+    # Trường hợp hỏi lịch trống
+    if any(phrase in lowered for phrase in ["lịch", "lich", "rảnh", "ranh", "trống", "trong", "schedule"]):
+        try:
+            return look_up_free_schedule.invoke({"query": user_text})
+        except Exception:
+            return (
+                "Mình chưa tra được lịch trống lúc này. "
+                "Bạn có thể gửi tên bác sĩ hoặc khoa cần khám."
+            )
+
+    # Trường hợp muốn đặt lịch
+    if any(phrase in lowered for phrase in ["đặt lịch", "dat lich", "book", "appointment"]):
+        return (
+            "Để đặt lịch, bạn vui lòng cung cấp tên khoa hoặc bác sĩ, "
+            "ngày giờ mong muốn, và thông tin cần thiết theo luồng đặt khám."
+        )
+
+    # Không cố gọi tool không tồn tại
     return (
-        'Mình đang gặp sự cố kết nối với mô hình ngôn ngữ nên chỉ hỗ trợ được mức cơ bản lúc này. '
-        'Bạn có thể mô tả triệu chứng hoặc hỏi trực tiếp kiểu như “nên khám khoa nào?” để mình định hướng sơ bộ.'
+        "Mình hiện chỉ hỗ trợ 4 tác vụ: tra chuyên khoa, tra bác sĩ theo khoa, "
+        "xem lịch trống, và đặt lịch khám. Bạn có thể hỏi theo một trong các dạng đó."
     )
 
 
 def agent_node(state: AgentState) -> AgentState:
-    # Node chính của graph: chèn system prompt, chạy safety check, rồi gọi model/tool.
-    messages = state['messages']
+    messages = state["messages"]
 
     if not messages or not isinstance(messages[0], SystemMessage):
         messages = [SystemMessage(content=SYSTEM_PROMPT)] + messages
 
-    safety_message = _hard_safety_response(messages)
-    if safety_message is not None:
-        print('[Safety] Emergency red flag detected')
-        return {'messages': [safety_message]}
-
     try:
         response = LLM_WITH_TOOLS.invoke(messages)
     except Exception as exc:
-        print(f'[Agent error] {type(exc).__name__}: {exc}')
-        latest_human = _latest_human_text(messages) or ''
-        response = AIMessage(
-            content=_fallback_response(
-                latest_human, turn_index=max(1, _human_turn_count(messages))
-            )
-        )
+        print(f"[Agent error] {type(exc).__name__}: {exc}")
+        latest_human = _latest_human_text(messages) or ""
+        response = AIMessage(content=_fallback_response(latest_human))
 
     if response.tool_calls:
         for tool_call in response.tool_calls:
             print(f"[Tool call] {tool_call['name']}({tool_call['args']})")
     else:
-        print('[Agent] Trả lời trực tiếp')
+        print("[Agent] Trả lời trực tiếp")
 
-    return {'messages': [response]}
+    return {"messages": [response]}
 
 
 def build_graph():
-    # Tạo luồng agent -> tools -> agent để model có thể gọi tool nhiều bước nếu cần.
     builder = StateGraph(AgentState)
-    builder.add_node('agent', agent_node)
-    builder.add_node('tools', ToolNode(TOOLS))
+    builder.add_node("agent", agent_node)
+    builder.add_node("tools", ToolNode(TOOLS))
 
-    builder.add_edge(START, 'agent')
-    builder.add_conditional_edges('agent', tools_condition)
-    builder.add_edge('tools', 'agent')
+    builder.add_edge(START, "agent")
+    builder.add_conditional_edges("agent", tools_condition)
+    builder.add_edge("tools", "agent")
 
     return builder.compile()
 
@@ -159,40 +160,38 @@ GRAPH = build_graph()
 
 
 def run_turn(user_input: str, history: list | None = None):
-    # Chạy một lượt hội thoại với lịch sử hiện có và trả về toàn bộ message mới nhất.
     current_history = history or []
     input_messages = current_history + [HumanMessage(content=user_input)]
-    result = GRAPH.invoke({'messages': input_messages})
-    messages = result['messages']
+    result = GRAPH.invoke({"messages": input_messages})
+    messages = result["messages"]
     all_messages = messages if isinstance(messages, list) else [messages]
 
-    new_messages = all_messages[len(current_history) + 1 :]
+    new_messages = all_messages[len(current_history) + 1:]
     for message in new_messages:
         if isinstance(message, ToolMessage):
-            print(f'[Tool result] {_preview_text(message.content)}')
+            print(f"[Tool result] {_preview_text(message.content)}")
 
     return all_messages
 
 
 def main() -> None:
-    # CLI đơn giản để chat thử agent ngay trong terminal.
-    print('=' * 60)
-    print('Vinmec Triage Assistant - Trợ lý định hướng chuyên khoa')
+    print("=" * 60)
+    print("Vinmec Triage Assistant - Trợ lý định hướng chuyên khoa")
     print("Gõ 'quit' để thoát")
-    print('=' * 60)
+    print("=" * 60)
 
     history: list = []
 
     while True:
-        user_input = input('\nBạn: ').strip()
-        if user_input.lower() in {'quit', 'exit', 'q'}:
+        user_input = input("\nBạn: ").strip()
+        if user_input.lower() in {"quit", "exit", "q"}:
             break
 
-        print('\n[Vinmec Triage Assistant đang suy nghĩ...]')
+        print("\n[Vinmec Triage Assistant đang suy nghĩ...]")
         history = run_turn(user_input, history)
         final_message = history[-1]
-        print(f'\nVinmec Triage Assistant: {final_message.content}')
+        print(f"\nVinmec Triage Assistant: {final_message.content}")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()
