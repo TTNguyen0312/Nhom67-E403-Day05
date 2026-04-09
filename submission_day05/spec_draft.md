@@ -139,27 +139,7 @@ Trong bài toán này, hệ thống làm nhiệm vụ đọc triệu chứng + s
 | Bao nhiêu ca mà khoa AI gợi ý đầu tiên trùng với khoa bệnh nhân thực sự khám/phù hợp nhất | ≥ 85% | < 70% trong 1 tuần |
 | % ca thực sự nguy cấp được nhận diện đúng | ≥ 98% | < 95% trong bất kỳ tuần nào |
 
-Cách xây dựng Bộ dữ liệu Kiểm thử (Internal Benchmark)
-Vì Spec của bạn nhấn mạnh vào Recall 98% cho ca cấp cứu và 85% chính xác phân khoa, bạn cần tạo 3 tập dữ liệu kiểm thử sau:
 
-a. Tập "Red Flag" (Safety Test)
-Nguồn: Danh mục các triệu chứng cấp cứu của Vinmec.
-
-Cách làm: Tạo 100 câu input biến thể (ví dụ: "tôi thấy nặng ngực như có đá đè" thay vì nói "đau ngực").
-
-Mục tiêu: 100% các câu này phải kích hoạt Safety Guardrail.
-
-b. Tập "Triage Golden Set" (Accuracy Test)
-Cấu trúc: { Triệu chứng } -> { Chuyên khoa đúng }.
-
-Nguồn: Lấy dữ liệu lịch sử khám (đã anonymized). Lọc những ca mà "Lý do khám" và "Khoa kết luận" khớp nhau.
-
-Cách chạy: Chạy batch qua Agent và đo tỷ lệ khớp (Top-1 và Top-3 chuyên khoa).
-
-c. Tập "Correction Logic" (Trust Test)
-Kịch bản: User cố tình đưa thông tin sai hoặc phản đối gợi ý (ví dụ Path 4 trong User Story).
-
-Mục tiêu: Kiểm tra xem Agent có bị "cố chấp" không, hay có khả năng tiếp nhận feedback để đổi khoa.
 ---
 
 ## 4. Top 3 Failure Modes
@@ -193,7 +173,7 @@ Về chất lượng, precision được ưu tiên hơn recall — thà nói "ch
 
 Data flywheel được xây hoàn toàn từ hành vi bệnh nhân trong vòng hội thoại — không cần nhãn từ bác sĩ. Mỗi lần bệnh nhân từ chối gợi ý, mỗi lần hội thoại phải điều chỉnh, mỗi câu Yes/No sau khi đặt lịch xong đều được log và label tự động. Dữ liệu này nuôi hai luồng song song: cải thiện prompt hàng tuần cho các nhóm triệu chứng AI đang yếu, và fine-tune model hàng tháng khi đủ volume. Càng nhiều bệnh nhân dùng, model càng hiểu đặc thù triệu chứng và cấu trúc chuyên khoa của từng bệnh viện — đây là phần GPT-4o nền không có và không thể thay thế.
 
-** 7. Kiến trúc Hệ thống (Multi-Agent Design)
+## 7. Kiến trúc Hệ thống (Multi-Agent Design)
 Với yêu cầu "Augmentation" và giới hạn "3 vòng hội thoại", bạn nên sử dụng LangGraph để kiểm soát luồng (State Management) chặt chẽ hơn là để Agent tự chạy tự do.
 
 Sơ đồ đề xuất:
@@ -204,3 +184,25 @@ Node 2: Triage Agent (LLM): Đóng vai trò thực hiện hội thoại, đặt 
 Node 3: Knowledge Retriever (RAG): Truy xuất thông tin chuyên khoa/bác sĩ từ dữ liệu nội bộ Vinmec.
 
 Node 4: Router/Orchestrator: Đếm số vòng hội thoại. Nếu turn_count > 3 hoặc confidence < threshold, chuyển sang Human Handoff.
+
+## 8. Cách xây dựng Bộ dữ liệu Kiểm thử (Internal Benchmark)
+Vì Spec của bạn nhấn mạnh vào Recall 98% cho ca cấp cứu và 85% chính xác phân khoa, bạn cần tạo 3 tập dữ liệu kiểm thử sau:
+
+a. Tập "Red Flag" (Safety Test)
+Nguồn: Danh mục các triệu chứng cấp cứu của Vinmec.
+
+Cách làm: Tạo 100 câu input biến thể (ví dụ: "tôi thấy nặng ngực như có đá đè" thay vì nói "đau ngực").
+
+Mục tiêu: 100% các câu này phải kích hoạt Safety Guardrail.
+
+b. Tập "Triage Golden Set" (Accuracy Test)
+Cấu trúc: { Triệu chứng } -> { Chuyên khoa đúng }.
+
+Nguồn: Lấy dữ liệu lịch sử khám (đã anonymized). Lọc những ca mà "Lý do khám" và "Khoa kết luận" khớp nhau.
+
+Cách chạy: Chạy batch qua Agent và đo tỷ lệ khớp (Top-1 và Top-3 chuyên khoa).
+
+c. Tập "Correction Logic" (Trust Test)
+Kịch bản: User cố tình đưa thông tin sai hoặc phản đối gợi ý (ví dụ Path 4 trong User Story).
+
+Mục tiêu: Kiểm tra xem Agent có bị "cố chấp" không, hay có khả năng tiếp nhận feedback để đổi khoa.
