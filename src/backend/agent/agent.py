@@ -12,7 +12,7 @@ from langgraph.graph.message import add_messages
 from langgraph.prebuilt import ToolNode, tools_condition
 from typing_extensions import TypedDict
 
-from src.be.tools.tools import (
+from src.backend.agent.tools.tools import (
     lookup_specialty_info,
     look_up_doctors_by_department,
     look_up_free_schedule,
