@@ -23,7 +23,7 @@ from triage_tools import (
 
 load_dotenv('.env')
 
-SYSTEM_PROMPT_PATH = Path(__file__).resolve().parent / 'system_prompt.xml'
+SYSTEM_PROMPT_PATH = Path(__file__).resolve().parent / 'system_prompt.txt'
 SYSTEM_PROMPT = SYSTEM_PROMPT_PATH.read_text(encoding='utf-8')
 
 
