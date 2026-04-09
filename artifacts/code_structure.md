@@ -1,30 +1,70 @@
-# 🏥 Medical Triage Agent — Unified Monorepo Structure
 project/
 │
 ├── frontend/                          # UI layer
-│   ├── components/                    # chat UI, result cards
-│   ├── pages/                         # main screens
-│   ├── services/                      # API calls (triage, image, booking)
-│   ├── hooks/                         # state management (chat, fetch)
-│   ├── types/                         # frontend types (sync từ shared)
-│   ├── styles/                        # CSS / Tailwind
+│   ├── components/
+│   ├── pages/
+│   ├── services/                      # gọi API backend
+│   ├── hooks/
+│   ├── types/
+│   ├── styles/
 │   └── utils/
 │
-├── backend/                           # API layer
-│   ├── api/
+├── backend/                           # Backend = API + Agent service
+│   │
+│   ├── api/                           # 🌐 HTTP layer
 │   │   ├── routes/
-│   │   │   ├── triage.py              # main endpoint
-│   │   │   ├── image.py               # future: image upload
-│   │   │   └── booking.py             # future: booking
+│   │   │   ├── triage.py              # POST /triage
+│   │   │   ├── image.py               # future
+│   │   │   └── booking.py             # future
 │   │   │
 │   │   └── schemas/
-│   │       ├── request.py             # request models
-│   │       └── response.py            # response models
+│   │       ├── request.py
+│   │       └── response.py
 │   │
-│   ├── services/
-│   │   ├── agent_service/             # call agent system
+│   ├── services/                      # 🧩 Business services
+│   │   ├── agent_service/             # ⭐ wrapper gọi agent
+│   │   │   ├── triage_service.py      # entry point chính
+│   │   │   └── dto.py                 # input/output contract
+│   │   │
 │   │   ├── booking_service/           # future
 │   │   └── image_service/             # future
+│   │
+│   ├── agent/                         # 🧠 AI system (LangGraph)
+│   │   ├── graph/
+│   │   │   ├── builder.py
+│   │   │   ├── edges.py
+│   │   │   └── runner.py
+│   │   │
+│   │   ├── nodes/
+│   │   │   ├── extract/
+│   │   │   ├── triage/
+│   │   │   ├── recommend/
+│   │   │   ├── router/
+│   │   │   ├── error_handler/
+│   │   │   ├── risk_detection/        # future
+│   │   │   ├── image_analysis/        # future
+│   │   │   └── booking/               # future
+│   │   │
+│   │   ├── state/
+│   │   │   └── agent_state.py
+│   │   │
+│   │   ├── prompts/
+│   │   │   ├── extract_prompt.txt
+│   │   │   └── triage_prompt.txt
+│   │   │
+│   │   ├── tools/
+│   │   │   ├── medical_search.py
+│   │   │   └── hospital_api.py
+│   │   │
+│   │   ├── pipelines/
+│   │   │   ├── triage_pipeline.py
+│   │   │   └── multimodal_pipeline.py
+│   │   │
+│   │   ├── evaluation/
+│   │   │   ├── test_runner.py
+│   │   │   └── metrics.py
+│   │   │
+│   │   └── utils/
 │   │
 │   ├── middleware/
 │   │   ├── logging.py
@@ -34,84 +74,35 @@ project/
 │   │   ├── settings.py
 │   │   └── env.py
 │   │
-│   └── main.py                        # entry point
-│
-├── agent/                             # LangGraph AI system
-│   ├── graph/
-│   │   ├── builder.py                 # build graph
-│   │   ├── edges.py                   # transitions
-│   │   └── runner.py                  # execute graph
-│   │
-│   ├── nodes/                         # processing steps
-│   │   ├── extract/                   # extract symptoms
-│   │   ├── triage/                    # classify specialty
-│   │   ├── recommend/                 # generate response
-│   │   ├── router/                    # routing logic
-│   │   ├── error_handler/             # fallback
-│   │   ├── risk_detection/            # future: emergency detection
-│   │   ├── image_analysis/            # future
-│   │   └── booking/                   # future
-│   │
-│   ├── state/
-│   │   └── agent_state.py             # shared state schema
-│   │
-│   ├── prompts/
-│   │   ├── extract_prompt.txt
-│   │   └── triage_prompt.txt
-│   │
-│   ├── tools/
-│   │   ├── medical_search.py          # future (RAG)
-│   │   └── hospital_api.py            # future
-│   │
-│   ├── pipelines/
-│   │   ├── triage_pipeline.py         # main flow
-│   │   └── multimodal_pipeline.py     # future
-│   │
-│   ├── evaluation/
-│   │   ├── test_runner.py
-│   │   └── metrics.py
-│   │
-│   └── utils/
+│   └── main.py                        # entry point backend
 │
 ├── data/                              # data layer
-│   ├── raw/                           # raw datasets (optional)
-│   ├── processed/                     # cleaned data
+│   ├── raw/
+│   ├── processed/
 │   │
 │   ├── mappings/
-│   │   └── symptom_to_specialty.json  # core mapping
+│   │   └── symptom_to_specialty.json
 │   │
 │   ├── schemas/
 │   │   └── symptom_schema.json
 │   │
 │   ├── eval/
-│   │   ├── test_cases.json            # input cases
-│   │   └── expected_outputs.json      # expected results
+│   │   ├── test_cases.json
+│   │   └── expected_outputs.json
 │   │
 │   └── examples/
-│       └── sample_inputs.json
 │
-├── shared/                            # shared FE-BE layer
+├── shared/                            # shared types/constants
 │   ├── types/
-│   │   ├── triage.ts                  # shared response type
-│   │   └── common.ts
-│   │
 │   ├── constants/
-│   │   ├── specialties.ts
-│   │   └── config.ts
-│   │
 │   └── utils/
 │
-├── infra/                             # deployment & config
+├── infra/
 │   ├── docker/
-│   │   ├── Dockerfile.backend
-│   │   └── Dockerfile.frontend
-│   │
 │   ├── docker-compose.yml
-│   │
 │   └── env/
-│       └── .env.example
 │
-├── tests/                             # testing
+├── tests/
 │   ├── backend/
 │   ├── agent/
 │   └── e2e/
