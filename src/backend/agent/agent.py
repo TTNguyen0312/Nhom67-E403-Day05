@@ -19,7 +19,7 @@ from src.backend.agent.tools.tools import (
     book_appointment,
 )
 
-load_dotenv(".env")
+load_dotenv(Path(__file__).resolve().parents[3] / ".env")
 
 SYSTEM_PROMPT_PATH = Path(__file__).resolve().parent / "system_prompt.txt"
 SYSTEM_PROMPT = SYSTEM_PROMPT_PATH.read_text(encoding="utf-8")

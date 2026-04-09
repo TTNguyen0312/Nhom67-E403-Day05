@@ -1,0 +1,7 @@
+Run frontend:
+cd .\src\frontend\vinmec-patientguide\
+npm i
+npm run dev
+
+Run backend:
+python -m uvicorn src.backend.main:app --reload
