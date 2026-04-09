@@ -1,8 +1,8 @@
 import { useState, useEffect, useRef } from 'react';
 import { Shell, Bubble, TypingDots } from '../components';
 import { colors } from '../styles/tokens';
-import { EMERGENCY_KEYWORDS, AI_QUESTIONS } from '../data/constants';
 import { sendMessageToAgent } from "../services/agentApi";
+
 export default function TriageScreen({ onEmergency, onSuggest, onEscalate, goHome }) {
   const [msgs, setMsgs] = useState([
     {
@@ -12,12 +12,9 @@ export default function TriageScreen({ onEmergency, onSuggest, onEscalate, goHom
     },
   ]);
   const [input, setInput] = useState('');
-  const [round, setRound] = useState(0);
-  const [entered, setEntered] = useState(false);
   const [typing, setTyping] = useState(false);
   const scrollRef = useRef(null);
 
-  /* Auto-scroll on new messages */
   useEffect(() => {
     scrollRef.current?.scrollTo({
       top: scrollRef.current.scrollHeight,
@@ -29,84 +26,42 @@ export default function TriageScreen({ onEmergency, onSuggest, onEscalate, goHom
     setMsgs((p) => [...p, { id: Date.now() + 1, ai: true, text }]);
   };
 
-  // const send = () => {
-  //   const txt = input.trim();
-  //   if (!txt || typing) return;
+  const addUserMsg = (text) => {
+    setMsgs((p) => [...p, { id: Date.now(), ai: false, text }]);
+  };
 
-  //   setMsgs((p) => [...p, { id: Date.now(), ai: false, text: txt }]);
-  //   setInput('');
-
-  //   /* ── Emergency check ── */
-  //   if (EMERGENCY_KEYWORDS.some((kw) => txt.toLowerCase().includes(kw))) {
-  //     setTyping(true);
-  //     setTimeout(() => {
-  //       setTyping(false);
-  //       onEmergency();
-  //     }, 1200);
-  //     return;
-  //   }
-
-  //   setTyping(true);
-
-  //   /* ── First symptom entry ── */
-  //   if (!entered) {
-  //     setEntered(true);
-  //     setTimeout(() => {
-  //       setTyping(false);
-  //       addAIMsg(`Cảm ơn bạn. Để đánh giá chính xác hơn:\n\n${AI_QUESTIONS[0]}`);
-  //       setRound(1);
-  //     }, 1400);
-  //     return;
-  //   }
-
-  //   /* ── Follow-up rounds ── */
-  //   const next = round + 1;
-  //   setTimeout(() => {
-  //     setTyping(false);
-  //     if (next < 3) {
-  //       addAIMsg(AI_QUESTIONS[next] || 'Bạn có thêm thông tin nào khác?');
-  //       setRound(next);
-  //     } else if (next === 3) {
-  //       addAIMsg('Cảm ơn bạn. Dựa trên mô tả, tôi sẽ gợi ý chuyên khoa phù hợp.');
-  //       setTimeout(onSuggest, 900);
-  //     } else {
-  //       /* Over 3 rounds → escalate */
-  //       onEscalate();
-  //     }
-  //   }, 1400);
-
-
-  // };
   const send = async () => {
-  const txt = input.trim();
-  if (!txt || typing) return;
+    const txt = input.trim();
+    if (!txt || typing) return;
 
-  addUserMsg(txt);
-  setInput('');
-  setTyping(true);
+    addUserMsg(txt);
+    setInput('');
+    setTyping(true);
 
-  try {
-    const data = await sendMessageToAgent({
-      message: txt,
-      session_id: "session-001",
-    });
+    try {
+      const data = await sendMessageToAgent({
+        message: txt,
+        session_id: "session-001",
+      });
 
-    setTyping(false);
-    addAIMsg(data.reply || "Không có phản hồi từ hệ thống.");
+      setTyping(false);
 
-    if (data.next_screen === "EmergencyScreen") {
-      onEmergency?.(data);
-    } else if (data.next_screen === "SpecialtyScreen") {
-      onSuggest?.(data);
-    } else if (data.next_screen === "EscalateScreen") {
-      onEscalate?.(data);
+      addAIMsg(data.reply || "Không có phản hồi từ hệ thống.");
+
+      if (data.next_screen === "EmergencyScreen") {
+        setTimeout(() => onEmergency?.(data), 800);
+      } else if (data.next_screen === "SpecialtyScreen") {
+        setTimeout(() => onSuggest?.(data), 800);
+      } else if (data.next_screen === "EscalateScreen") {
+        setTimeout(() => onEscalate?.(data), 800);
+      }
+    } catch (error) {
+      setTyping(false);
+      addAIMsg("Xin lỗi, hiện tại chưa thể kết nối tới hệ thống.");
+      console.error(error);
     }
-  } catch (error) {
-    setTyping(false);
-    addAIMsg("Xin lỗi, hiện tại chưa thể kết nối tới hệ thống.");
-    console.error(error);
-  }
-};
+  };
+
   return (
     <Shell
       title="Sàng lọc triệu chứng"
