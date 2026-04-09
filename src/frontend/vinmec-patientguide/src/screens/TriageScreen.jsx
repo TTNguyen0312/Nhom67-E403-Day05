@@ -15,6 +15,9 @@ export default function TriageScreen({ onEmergency, onSuggest, onEscalate, goHom
   const [round, setRound] = useState(0);
   const [entered, setEntered] = useState(false);
   const [typing, setTyping] = useState(false);
+  const [sessionId, setSessionId] = useState(
+    () => new URLSearchParams(window.location.search).get('session_id')
+  );
   const scrollRef = useRef(null);
 
   /* Auto-scroll on new messages */
@@ -27,6 +30,10 @@ export default function TriageScreen({ onEmergency, onSuggest, onEscalate, goHom
 
   const addAIMsg = (text) => {
     setMsgs((p) => [...p, { id: Date.now() + 1, ai: true, text }]);
+  };
+
+  const addUserMsg = (text) => {
+    setMsgs((p) => [...p, { id: Date.now(), ai: false, text }]);
   };
 
   // const send = () => {
@@ -88,19 +95,17 @@ export default function TriageScreen({ onEmergency, onSuggest, onEscalate, goHom
   try {
     const data = await sendMessageToAgent({
       message: txt,
-      session_id: "session-001",
+      session_id: `session-${sessionId}`,
     });
 
+    if (data.session_id) {
+      setSessionId(data.session_id);
+      const params = new URLSearchParams(window.location.search);
+      params.set('session_id', data.session_id);
+      window.history.replaceState(null, '', `?${params.toString()}`);
+    }
     setTyping(false);
     addAIMsg(data.reply || "Không có phản hồi từ hệ thống.");
-
-    if (data.next_screen === "EmergencyScreen") {
-      onEmergency?.(data);
-    } else if (data.next_screen === "SpecialtyScreen") {
-      onSuggest?.(data);
-    } else if (data.next_screen === "EscalateScreen") {
-      onEscalate?.(data);
-    }
   } catch (error) {
     setTyping(false);
     addAIMsg("Xin lỗi, hiện tại chưa thể kết nối tới hệ thống.");
