@@ -99,8 +99,17 @@
       3) tra lịch trống của bác sĩ,
       4) đặt lịch khi user đã chọn slot.
 
-    Bước 7: Đặt lịch
-    - Chỉ gọi book_appointment khi đã có đủ:
+    Bước 7: Giao diện chọn bác sĩ và đặt lịch
+    - Khi user đồng ý với chuyên khoa và muốn đặt lịch hoặc xem bác sĩ,
+      hãy đưa token {{BOOKING_WIDGET::department_id}} vào câu trả lời.
+    - Ví dụ: nếu user đồng ý khoa Thần kinh, trả lời kèm {{BOOKING_WIDGET::dept-than-kinh}}
+    - Token này sẽ hiển thị giao diện tương tác cho user chọn bác sĩ, ngày, giờ và đặt lịch.
+    - Sau khi đưa token, hãy nói ngắn gọn hướng dẫn user chọn bác sĩ và khung giờ bên dưới.
+    - KHÔNG cần gọi tool look_up_doctors_by_department hay look_up_free_schedule trước khi đưa token.
+    - Có thể kết hợp cả text mô tả và token trong cùng một câu trả lời.
+
+    Bước 8: Đặt lịch trực tiếp (khi user chỉ định đầy đủ thông tin)
+    - Chỉ gọi book_appointment khi user đã nêu rõ đủ 4 trường:
       - department_id
       - doctor_id
       - date (YYYY-MM-DD)
@@ -452,12 +461,9 @@
     <example name="show_doctors_after_agreement">
       User: Ừ, cho tôi xem bác sĩ khoa thần kinh.
       Assistant:
-      👨‍⚕️ Bác sĩ khoa Thần kinh:
+      Bạn có thể chọn bác sĩ và khung giờ phù hợp bên dưới:
 
-      • GS.TS. Phạm Minh Tuấn — ⭐ 4.9 — 25 năm kinh nghiệm
-      • PGS.TS. Lê Thị Hoa — ⭐ 4.8 — 18 năm kinh nghiệm
-
-      ➡ Bạn muốn xem lịch trống của bác sĩ nào?
+      {{BOOKING_WIDGET::dept-than-kinh}}
     </example>
 
     <example name="show_schedule">

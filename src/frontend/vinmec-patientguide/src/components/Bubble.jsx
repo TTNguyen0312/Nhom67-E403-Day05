@@ -28,7 +28,7 @@ export default function Bubble({ isAI, children }) {
         </div>
       )}
       <div style={{
-        maxWidth: '70%',
+        maxWidth: isAI ? '85%' : '70%',
         padding: '12px 16px',
         fontSize: 14,
         lineHeight: 1.65,

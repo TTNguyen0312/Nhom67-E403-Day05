@@ -1,8 +1,10 @@
 import { useState, useEffect, useRef } from 'react';
-import { Shell, Bubble, TypingDots } from '../components';
+import { Shell, Bubble, TypingDots, BookingWidget } from '../components';
 import { colors } from '../styles/tokens';
 import { EMERGENCY_KEYWORDS, AI_QUESTIONS } from '../data/constants';
 import { sendMessageToAgent } from '../services/agentApi';
+
+const BOOKING_WIDGET_RE = /\{\{BOOKING_WIDGET::([a-z0-9-]+)\}\}/g;
 
 function renderText(text) {
   if (!text) return null;
@@ -16,6 +18,34 @@ function renderText(text) {
       )}
     </span>
   );
+}
+
+function MessageContent({ text, onBooked }) {
+  const parts = [];
+  let lastIndex = 0;
+  let match;
+  const re = new RegExp(BOOKING_WIDGET_RE.source, 'g');
+
+  while ((match = re.exec(text)) !== null) {
+    if (match.index > lastIndex) {
+      parts.push(<span key={`t-${lastIndex}`}>{renderText(text.slice(lastIndex, match.index))}</span>);
+    }
+    const deptId = match[1];
+    parts.push(
+      <BookingWidget key={`bw-${deptId}-${match.index}`} departmentId={deptId} onBooked={onBooked} />
+    );
+    lastIndex = re.lastIndex;
+  }
+
+  if (lastIndex < text.length) {
+    parts.push(<span key={`t-${lastIndex}`}>{renderText(text.slice(lastIndex))}</span>);
+  }
+
+  if (parts.length === 0) {
+    return renderText(text);
+  }
+
+  return <>{parts}</>;
 }
 
 export default function TriageScreen({ onEmergency, onSuggest, onEscalate, goHome }) {
@@ -211,7 +241,13 @@ export default function TriageScreen({ onEmergency, onSuggest, onEscalate, goHom
                 style={{ maxWidth: '100%', borderRadius: 10, marginBottom: m.text ? 8 : 0, display: 'block' }}
               />
             )}
-            {renderText(m.text)}
+            {m.ai ? (
+              <MessageContent text={m.text} onBooked={(apt) => {
+                addAIMsg(`✅ Đặt lịch thành công! Mã lịch hẹn: ${apt.id}`);
+              }} />
+            ) : (
+              renderText(m.text)
+            )}
           </Bubble>
         ))}
         {typing && (
