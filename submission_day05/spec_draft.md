@@ -138,6 +138,27 @@ Trong bài toán này, hệ thống làm nhiệm vụ đọc triệu chứng + s
 | Bao nhiêu ca mà khoa AI gợi ý đầu tiên trùng với khoa bệnh nhân thực sự khám/phù hợp nhất | ≥ 85% | < 70% trong 1 tuần |
 | % ca thực sự nguy cấp được nhận diện đúng | ≥ 98% | < 95% trong bất kỳ tuần nào |
 
+2. Cách xây dựng Bộ dữ liệu Kiểm thử (Internal Benchmark)
+Vì Spec của bạn nhấn mạnh vào Recall 98% cho ca cấp cứu và 85% chính xác phân khoa, bạn cần tạo 3 tập dữ liệu kiểm thử sau:
+
+a. Tập "Red Flag" (Safety Test)
+Nguồn: Danh mục các triệu chứng cấp cứu của Vinmec.
+
+Cách làm: Tạo 100 câu input biến thể (ví dụ: "tôi thấy nặng ngực như có đá đè" thay vì nói "đau ngực").
+
+Mục tiêu: 100% các câu này phải kích hoạt Safety Guardrail.
+
+b. Tập "Triage Golden Set" (Accuracy Test)
+Cấu trúc: { Triệu chứng } -> { Chuyên khoa đúng }.
+
+Nguồn: Lấy dữ liệu lịch sử khám (đã anonymized). Lọc những ca mà "Lý do khám" và "Khoa kết luận" khớp nhau.
+
+Cách chạy: Chạy batch qua Agent và đo tỷ lệ khớp (Top-1 và Top-3 chuyên khoa).
+
+c. Tập "Correction Logic" (Trust Test)
+Kịch bản: User cố tình đưa thông tin sai hoặc phản đối gợi ý (ví dụ Path 4 trong User Story).
+
+Mục tiêu: Kiểm tra xem Agent có bị "cố chấp" không, hay có khả năng tiếp nhận feedback để đổi khoa.
 ---
 
 ## 4. Top 3 Failure Modes
