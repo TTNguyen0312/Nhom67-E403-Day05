@@ -29,6 +29,7 @@ _sessions: dict[str, list] = {}
 class ChatRequest(BaseModel):
     message: str
     session_id: Optional[str] = None
+    image: Optional[str] = None  # base64-encoded image (no data URI prefix)
 
 
 class ChatResponse(BaseModel):
@@ -48,7 +49,7 @@ async def chat(payload: ChatRequest):
     history = _sessions.get(session_id, [])
 
     try:
-        updated_history = run_turn(payload.message, history)
+        updated_history = run_turn(payload.message, history, image_b64=payload.image or None)
     except Exception as exc:
         raise HTTPException(status_code=500, detail=str(exc))
 
