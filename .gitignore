@@ -1,3 +1,5 @@
+.gitignore/
+day6_venv/
 .venv/
 .env
 __pycache__/
