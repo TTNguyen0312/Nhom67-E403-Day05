@@ -78,7 +78,7 @@ Log hội thoại được label tự động theo hành vi bệnh nhân, dùng 
 
 **Có marginal value không?**
 
-Có — rất cao. GPT-4o đã biết triệu chứng y khoa phổ thông nhưng hoàn toàn không biết cấu trúc chuyên khoa cụ thể của từng bệnh viện, không có dữ liệu liên kết giữa triệu chứng và quy trình khám thực tế. Chính phần dữ liệu này — tích lũy từng ngày qua mỗi ca khám — là moat cạnh tranh dài hạn mà model nền không thể thay thế.
+Có, rất cao. GPT-4o đã biết triệu chứng y khoa phổ thông nhưng hoàn toàn không biết cấu trúc chuyên khoa cụ thể của từng bệnh viện, không có dữ liệu liên kết giữa triệu chứng và quy trình khám thực tế. Chính phần dữ liệu này — tích lũy từng ngày qua mỗi ca khám — là moat cạnh tranh dài hạn mà model nền không thể thay thế.
 
 ---
 
@@ -89,7 +89,7 @@ Có — rất cao. GPT-4o đã biết triệu chứng y khoa phổ thông nhưng
 > *"Là bệnh nhân ở nhà, tôi muốn mô tả triệu chứng và được gợi ý chuyên khoa phù hợp để có thể đặt lịch khám mà không cần biết trước mình cần khám khoa nào."*
 
 **Path 1 — Happy**
-Bệnh nhân mở app → mô tả triệu chứng rõ ràng → AI hỏi 1–2 câu làm rõ → gợi ý chuyên khoa kèm lý giải ngắn gọn, hỏi bệnh nhân có muốn đặt lịch không → bệnh nhân đồng ý → AI đưa ra danh sách bác sĩ và lịch khám → user chọn bác sĩ và slot → đặt lịch thành công → nhận xác nhận và nhắc lịch.
+Bệnh nhân mở app → mô tả triệu chứng rõ ràng hoặc upload ảnh triệu chứng → AI hỏi 1–2 câu làm rõ → gợi ý chuyên khoa kèm lý giải ngắn gọn, hỏi bệnh nhân có muốn đặt lịch không → bệnh nhân đồng ý → AI đưa ra danh sách bác sĩ và lịch khám → user chọn bác sĩ và slot → đặt lịch thành công → nhận xác nhận và nhắc lịch.
 
 **Path 2 — Low confidence**
 Bệnh nhân mô tả triệu chứng mơ hồ ("người mệt, không rõ chỗ nào") → AI không đủ tự tin → chủ động hỏi thêm từng câu một (thời gian xuất hiện, mức độ, kèm theo triệu chứng nào khác) → sau 2–3 vòng thu hẹp được → gợi ý khoa kèm giải thích → bệnh nhân xác nhận → đặt lịch.
@@ -111,7 +111,7 @@ AI gợi ý Tim mạch → bệnh nhân phản hồi "không liên quan đến t
 > *"Là bệnh nhân đi khám tại bệnh viện, tôi muốn được tư vấn nhanh chuyên khoa phù hợp để đến khám dựa theo triệu chứng của tôi mà không phải thông qua quầy điều phối."*
 
 **Path 1 — Happy**
-Bệnh nhân quét QR tại sảnh hoặc mở app → mô tả triệu chứng → AI gợi ý chuyên khoa → bệnh nhân đồng ý → chọn: đặt lịch online ngay hoặc nhận hướng dẫn đến quầy mua vé → nếu chọn online: đặt slot trong ngày, nhận mã số thứ tự → nếu chọn quầy: nhận chỉ dẫn phòng và số quầy cụ thể, không cần hỏi thêm ai.
+Bệnh nhân quét QR tại sảnh hoặc mở app → mô tả triệu chứng hoặc upload ảnh triệu chứng → AI gợi ý chuyên khoa → bệnh nhân đồng ý → chọn: đặt lịch online ngay hoặc nhận hướng dẫn đến quầy mua vé → nếu chọn online: đặt slot trong ngày, nhận mã số thứ tự → nếu chọn quầy: nhận chỉ dẫn phòng và số quầy cụ thể, không cần hỏi thêm ai.
 
 **Path 2 — Low confidence**
 Bệnh nhân cao tuổi mô tả triệu chứng không rõ ràng → AI hỏi từng câu ngắn, ngôn ngữ đơn giản → nếu vẫn không đủ tự tin sau 2 vòng → gợi ý Nội tổng quát là điểm khởi đầu an toàn → giải thích ngắn lý do → bệnh nhân chọn hướng đến quầy → nhận chỉ dẫn cụ thể.
@@ -193,7 +193,7 @@ Về chất lượng, precision được ưu tiên hơn recall — thà nói "ch
 
 Data flywheel được xây hoàn toàn từ hành vi bệnh nhân trong vòng hội thoại — không cần nhãn từ bác sĩ. Mỗi lần bệnh nhân từ chối gợi ý, mỗi lần hội thoại phải điều chỉnh, mỗi câu Yes/No sau khi đặt lịch xong đều được log và label tự động. Dữ liệu này nuôi hai luồng song song: cải thiện prompt hàng tuần cho các nhóm triệu chứng AI đang yếu, và fine-tune model hàng tháng khi đủ volume. Càng nhiều bệnh nhân dùng, model càng hiểu đặc thù triệu chứng và cấu trúc chuyên khoa của từng bệnh viện — đây là phần GPT-4o nền không có và không thể thay thế.
 
-** 7. Kiến trúc Hệ thống (Multi-Agent Design)
+## 7. Kiến trúc Hệ thống (Multi-Agent Design)
 Với yêu cầu "Augmentation" và giới hạn "3 vòng hội thoại", nên sử dụng LangGraph để kiểm soát luồng (State Management) chặt chẽ hơn là để Agent tự chạy tự do.
 
 Sơ đồ đề xuất:
