@@ -1,0 +1,5 @@
+Lộc: ROI 3 kịch bản (Conservative/Realistic/Optimistic)
+Tiến: Problem Statement, AI Product Canvas
+Quang: Top 3 failure modes
+Minh: Eval metrics + threshold
+Ngọc: User Stories * 4 paths 

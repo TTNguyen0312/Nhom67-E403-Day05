@@ -1,2 +1,0 @@
-Topic : Vinmec
-Problem statement: Bệnh nhận muốn khám bệnh, ứng dụng tư vấn chuyên khoa phù hợp
