@@ -174,7 +174,7 @@ Về chất lượng, precision được ưu tiên hơn recall — thà nói "ch
 Data flywheel được xây hoàn toàn từ hành vi bệnh nhân trong vòng hội thoại — không cần nhãn từ bác sĩ. Mỗi lần bệnh nhân từ chối gợi ý, mỗi lần hội thoại phải điều chỉnh, mỗi câu Yes/No sau khi đặt lịch xong đều được log và label tự động. Dữ liệu này nuôi hai luồng song song: cải thiện prompt hàng tuần cho các nhóm triệu chứng AI đang yếu, và fine-tune model hàng tháng khi đủ volume. Càng nhiều bệnh nhân dùng, model càng hiểu đặc thù triệu chứng và cấu trúc chuyên khoa của từng bệnh viện — đây là phần GPT-4o nền không có và không thể thay thế.
 
 ## 7. Kiến trúc Hệ thống (Multi-Agent Design)
-Với yêu cầu "Augmentation" và giới hạn "3 vòng hội thoại", bạn nên sử dụng LangGraph để kiểm soát luồng (State Management) chặt chẽ hơn là để Agent tự chạy tự do.
+Sử dụng LangGraph để kiểm soát luồng (State Management) chặt chẽ hơn.
 
 Sơ đồ đề xuất:
 Node 1: Safety Guardrail (Rule-based): Kiểm tra "Red Flags" (đau ngực, khó thở cấp...). Nếu dính, chuyển thẳng sang Emergency Path.
